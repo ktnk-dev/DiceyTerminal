@@ -1,9 +1,22 @@
 #только хардкор го на одном из следующих релизов уберу коменты)
+# └ │ ┘  ┌ ─ ┐  ├ ┤  → 
 
-import json, random
+import json, random, os
 import items as item_storage #можно импортировать свои базы предметов, импортировать несколько нельзя, но если вы кодите лучше чем я то прикрутите сами
-def error(text=""): input(f"error> {text}")
+multicommand = False
 
+def error(text=""): 
+    global w,h,multicommand
+    if multicommand: tr="├"
+    else: tr = "└"
+    input(f"   {tr}─ {text}")
+def resolution(): 
+    global w,h
+    w,h = os.get_terminal_size()
+    aw, ah = 60,30
+    if w < aw or h < ah:print("\n"*h); input(f"Разрешение вашего терминала не подходит! \nИгра будет корректно работать при разрешении {aw}x{ah} или выше\nПопробуйте изменить размер окна, или уменьшить шрифт\nВаше разрешение: {w}x{h}\n\nНажмите ENTER что-бы продолжить")
+    return w,h
+def i(text=""): return input(text)
 
 # Конфигурация
 class Settings():
@@ -14,6 +27,7 @@ class Settings():
         self.auto_use = False   #использовать предмет без подтверждения
         self.game = {           #основные значения
             'hp':10,
+            'max-hp':10,
             'mana': 7,
             'coin': 0,
         }                       
@@ -55,30 +69,32 @@ class UserData():
             except ValueError: self.choosed['dice'] = [];self.choosed['dice-ids'] = []; return
             try:
              if id < 1: self.dices[99999999]
-             self.choosed['dice-ids'].remove(self.choosed['dice'][id-1][0])
              self.choosed['dice'].remove(self.choosed['dice'][id-1])
+             self.choosed['dice-ids'].remove(self.choosed['dice-ids'][id-1])
             except IndexError or ValueError: error("вы выбраи куб которого несуществует")
 
     def show_choosed(self):
         ischs = ""
         res = ""
         if self.choosed['dice'] != []: 
-            ischs = "\nВыбрано:"; 
+            ischs = "│  Выбранно │"; 
             dc = ""
             for i in range(0,len(self.choosed['dice'])):
                 dc +=f"{self.choosed['dice'][i][1]} "
-            res=f" {dc}\n"
-        return ischs+res
+            res=f"{dc} "
+            res = f"{ischs+res}"
+            if res == "":...
+            else: print(res)
 
     def show_items(self, info=False):
      if info == False:
-        res = "Ваши предметы: \n"
+        res = ""
         i = 1
         for item in self.items:
 
             descr = item['description']
             if item in self.items_used: descr = "ПРЕДМЕТ НЕДОСТУПЕН"
-            res += f"{i}. {item['name']} ({descr})\n"
+            res += f"├ {item['name']} ({descr})\n"
             i+=1
         print(res[:-1])
      else:
@@ -176,26 +192,40 @@ class UserData():
             
 
 
+
+
 c = cfg = Settings()
 u = user = UserData()
-
+resolution()
 u.dice(act='end')
 while 1:
-    print("\n"*100)
-    print("\n")
+# └ │ ┘  ┌ ─ ┐  ├ ┤  →  ┬  ┴     ├──────────
+    
+    if resolution() == "error": continue    
+    print("\n"*h)
+    print(f"┌─── Ваши предметы "+"─"*(w-19))
     u.show_items()
-    print(u.show_choosed())
-    print("Кубы: "+u.dice(act="show"))
-    print(f"""\
-HP: {u.data['hp']} | Мана: {u.data['mana']} | Монеты: {u.data['coin']}""")
-    cmd = input("\ncommand> ")
-    if cmd=="": continue
-    if cmd=="get" or cmd[0]=="g": u.dice(act="get")
-    if cmd=="end" or cmd[0]=="e":u.dice(act='end')
-    if cmd.startswith("dice-remove") or cmd.startswith("dr"): u.selecting('dr', cmd.replace("dice-remove", "dr").replace("dr","").replace(" ",""))
-    elif cmd.startswith("dice") or cmd[0]=="d": u.selecting('d', cmd.replace("dice", "d").replace("d","").replace(" ",""))
-    if cmd.startswith("i"): u.show_items(info=cmd[1:])
-    if cmd.startswith("u"): u.use_item(cmd[1:])
+    print(f"├───────────┬── Кубы "+"─"*(w-21))
+    u.show_choosed()
+    print(f"│       Все │"+u.dice(act="show"))
+    print(f"├───────────┼── Статистика "+"─"*(w-27))
+    print(f"│        HP │ {u.data['hp']}/{c.game['max-hp']}")
+    print(f"│      Мана │ {u.data['mana']}")
+    print(f"│    Монеты │ {u.data['coin']}")
+    print(f"├───────────┴── Ввод команды "+"─"*(w-29))
+    cms=i(f"└─ ").replace("; ", ";")
+    if ";" in cms: multicommand=True
+    else: multicommand=False
+    for cmd in cms.split(";"):
+        
+        
+        if cmd=="": continue
+        if cmd=="get" or cmd[0]=="g": u.dice(act="get")
+        if cmd=="end" or cmd[0]=="e":u.dice(act='end')
+        if cmd.startswith("dice-remove") or cmd.startswith("dr"): u.selecting('dr', cmd.replace("dice-remove", "dr").replace("dr","").replace(" ",""))
+        elif cmd.startswith("dice") or cmd[0]=="d": u.selecting('d', cmd.replace("dice", "d").replace("d","").replace(" ",""))
+        if cmd.startswith("i"): u.show_items(info=cmd[1:])
+        if cmd.startswith("u") and cmd!="u": u.use_item(cmd[1:])
 
 
 
