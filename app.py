@@ -134,7 +134,7 @@ class UserData():
         if len(self.choosed['dice']) != len(i['requied']['dices']): 
             error(f"у вас выбрано неверное количество кубов. нужно: {len(i['requied']['dices'])}") ; return
 
-        if self.data['mana']-i['mana'] < 0: error("недостаточно маны")
+        if self.data['mana']-i['mana'] < 0: return error("недостаточно маны")
         
         if c.auto_use != True:
             usragr = input(f'''Вы действительно хотите использовать "{i['name']}"? (y/n) ''')
